@@ -141,11 +141,13 @@ I'm welcoming contributions if you have any fixes:
     invoked with the crate path
   * Do not panic on exceeding 4096 prints per frame, instead log an error
   * Use the std `OnceLock` over `lazy_static!`
+* `9.0.0`:  **Breaking**: bump bevy version to `0.16`
 
 ### Version matrix
 
 | bevy | latest supporting version      |
 |------|--------|
+| 0.16 | 9.0.0 |
 | 0.13 | 8.1.0 |
 | 0.12 | 7.0.0 |
 | 0.11 | 6.0.0 |

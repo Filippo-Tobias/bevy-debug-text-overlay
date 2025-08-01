@@ -31,7 +31,8 @@ use std::fmt;
 use std::sync::mpsc::{self, Receiver, SyncSender};
 use std::sync::{Mutex, OnceLock};
 
-use bevy::{prelude::*, utils::HashMap};
+use bevy::prelude::*;
+use std::collections::HashMap;
 
 use crate::block::Blocks;
 
@@ -248,7 +249,7 @@ impl PushList {
     }
 }
 fn update_messages_as_per_commands(
-    mut messages: Query<(&mut Text, &mut Message)>,
+    mut messages: Query<(&mut Text, &mut TextColor, &mut Message)>,
     mut key_entities: Local<HashMap<InvocationSiteKey, Entity>>,
     mut push_entities: Local<PushList>,
     mut cmds: Commands,
@@ -256,31 +257,29 @@ fn update_messages_as_per_commands(
     options: Res<Options>,
 ) {
     let channels = command_channels();
-    let text_style = |color| TextStyle {
-        color,
-        font_size: options.font_size,
-        ..Default::default()
-    };
-    let current_time = time.elapsed_seconds_f64();
-    let mut spawn_new = |text, color, timeout| {
-        let style = Style { position_type: PositionType::Absolute, ..default() };
+    let current_time = time.elapsed_secs_f64();
+    let mut spawn_new = |text: String, color: Color, timeout| {
+        let node = Node { position_type: PositionType::Absolute, ..Default::default() };
         cmds.spawn((
-            TextBundle::from_section(text, text_style(color)).with_style(style),
+            Text::new(text),
+            TextFont { font_size: options.font_size, ..Default::default() },
+            TextColor(color),
+            node,
             Message::new(timeout + current_time),
         ))
         .insert(Visibility::Hidden)
         .id()
     };
-    let mut update_message = |entity, new_text, new_color, timeout| {
+    let mut update_message = |entity, new_text: String, new_color: Color, timeout| {
         // FIXME: this can skip requests if the scheduling acts up and we
         // get two consecutive message from the same `screen_print!`
-        if let Ok((mut ui_text, mut message)) = messages.get_mut(entity) {
+        if let Ok((mut ui_text, mut text_color, mut message)) = messages.get_mut(entity) {
             message.expiration = timeout + current_time;
-            if ui_text.sections[0].style.color != new_color {
-                ui_text.sections[0].style.color = new_color;
+            if text_color.0 != new_color {
+                text_color.0 = new_color;
             }
-            if ui_text.sections[0].value != new_text {
-                ui_text.sections[0].value = new_text;
+            if ui_text.0 != new_text {
+                ui_text.0 = new_text;
             }
         }
     };
@@ -308,22 +307,22 @@ fn update_messages_as_per_commands(
 }
 
 fn layout_messages(
-    mut messages: Query<(Entity, &mut Style, &mut Visibility, &Node, &Message)>,
+    mut messages: Query<(Entity, &mut Node, &mut Visibility, &ComputedNode, &Message)>,
     mut line_sizes: Local<Blocks<Entity, f32>>,
     // position: Res<crate::DebugOverlayLocation>,
     time: Res<Time>,
 ) {
     use Visibility::{Hidden, Visible};
-    for (entity, mut style, mut vis, node, message) in messages.iter_mut() {
-        let size = node.size();
-        let is_expired = message.expiration < time.elapsed_seconds_f64();
+    for (entity, mut node_style, mut vis, computed, message) in messages.iter_mut() {
+        let size = computed.size();
+        let is_expired = message.expiration < time.elapsed_secs_f64();
         let is_visible = *vis == Visible;
         if is_visible == is_expired {
             *vis = if is_visible { Hidden } else { Visible };
             if !is_expired {
                 let offset = line_sizes.insert_size(entity, size.y);
-                style.top = Val::Px(offset);
-                style.left = Val::Px(0.0);
+                node_style.top = Val::Px(offset);
+                node_style.left = Val::Px(0.0);
             } else {
                 line_sizes.remove(entity);
             }
@@ -345,7 +344,7 @@ pub struct OverlayPlugin {
 }
 impl Default for OverlayPlugin {
     fn default() -> Self {
-        Self { fallback_color: Color::YELLOW, font_size: 13.0 }
+        Self { fallback_color: Color::srgb(1.0, 1.0, 0.0), font_size: 13.0 }
     }
 }
 
