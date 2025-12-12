@@ -15,10 +15,10 @@ default = ["debug"]
 debug = ["bevy/bevy_render", "bevy/bevy_asset", "bevy/bevy_ui", "bevy/bevy_text", "bevy/bevy_core_pipeline", "bevy/default_font", "bevy/bevy_log"]
 
 [dependencies]
-bevy = { version = "0.16", default-features = false }
+bevy = { version = "0.17.1", default-features = false }
 
 [dev-dependencies]
-bevy = { version = "0.16", default-features = false, features = [
+bevy = { version = "0.17.1", default-features = false, features = [
   "bevy_render", "x11", "bevy_core_pipeline", "bevy_asset", "bevy_sprite",
   "bevy_ui", "bevy_text", "default_font", "bevy_log"
 ] }
@@ -26,7 +26,7 @@ bevy = { version = "0.16", default-features = false, features = [
 
 [package.metadata.release]
 pre-release-replacements = [
-  {search="\\| 0.16 \\| [0-9.]* \\|",replace="| 0.16 | {{version}} |",file="Readme.md"},
+  {search="\\| 0.17.1 \\| [0-9.]* \\|",replace="| 0.17.1 | {{version}} |",file="Readme.md"},
   {search="bevy-debug-text-overlay = \\{ version = \"[0-9.]*\"",replace="bevy-debug-text-overlay = { version = \"{{version}}\"",file="Readme.md"},
   {search="bevy-debug-text-overlay = \"[0-9.]*\"",replace="bevy-debug-text-overlay = \"{{version}}\"",file="Readme.md"},
 ]
